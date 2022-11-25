@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"errors"
+	"fmt"
+	"github.com/alexeyco/simpletable"
 )
 
 type item struct{
@@ -89,4 +91,58 @@ func (t *Todos) Store(filename string) error{
 }
 
 
+func (t *Todos) PrintTasks(){
+	table := simpletable.New()
 
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignCenter, Text: "#"},
+			{Align: simpletable.AlignCenter, Text: "Task"},
+			{Align: simpletable.AlignCenter, Text: "Done"},
+			{Align: simpletable.AlignCenter, Text: "CreatedAt"},
+			{Align: simpletable.AlignCenter, Text: "CompletedAt"},
+		},
+	}
+
+	var cells [][]*simpletable.Cell
+
+	for i, item := range *t{
+		i++
+		task := blue(item.Task)
+
+		if item.Done{
+			task = green(fmt.Sprintf("\u2705 %s", item.Task))
+		}
+
+		cells = append(cells, *&[]*simpletable.Cell{
+			{Text: fmt.Sprintf("%d", i)},
+			{Text: task},
+			{Text: fmt.Sprintf("%t", item.Done)},
+			{Text: item.CreatedAt.Format(time.RFC822)},
+			{Text: item.CompletedAt.Format(time.RFC822)},
+		})
+	}
+
+	table.Body = &simpletable.Body{Cells: cells}
+	table.Footer = &simpletable.Footer{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignCenter, Span: 5, Text: red(fmt.Sprintf("There are %d pendig tasks", t.Counter()))},
+		},
+	}
+
+	table.SetStyle(simpletable.StyleUnicode)
+	table.Println()
+}
+
+
+func (t *Todos) Counter() int{
+	total := 0
+
+	for _, item := range *t{
+		if !item.Done{
+			total++ 
+		}
+	}
+
+	return total
+}
